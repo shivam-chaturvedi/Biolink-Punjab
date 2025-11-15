@@ -1,0 +1,144 @@
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowRight, Users, TrendingUp, Leaf, Shield } from "lucide-react";
+import heroBackground from "@/assets/hero-background.jpg";
+import problemImage from "@/assets/problem-image.png";
+
+const Home = () => {
+  return (
+    <div className="min-h-screen">
+      {/* Hero Section */}
+      <section 
+        className="relative h-[600px] md:h-[700px] flex items-center justify-center overflow-hidden"
+        style={{
+          backgroundImage: `url(${heroBackground})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="absolute inset-0 gradient-hero" />
+        <div className="relative z-10 container mx-auto px-4 text-center text-primary-foreground">
+          <h1 className="mb-6 animate-fade-in">
+            Welcome to North India's First<br />
+            Stubble Trading Platform
+          </h1>
+          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto opacity-95 animate-slide-up">
+            Where Farmers Meet Buyers for a Cleaner Tomorrow
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up">
+            <Link to="/farmer-login">
+              <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 text-lg px-8">
+                Become a Seller (Farmers)
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link to="/buyer-login">
+              <Button size="lg" variant="outline" className="border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary text-lg px-8">
+                Become a Buyer (Industries)
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Introduction Section */}
+      <section className="py-16 bg-muted">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <h2 className="text-center mb-8 text-primary">The Crisis</h2>
+            <div className="prose prose-lg max-w-none text-foreground">
+              <p className="text-lg leading-relaxed mb-6">
+                North India is facing a serious air pollution crisis every winter, and stubble burning in Punjab is one of the leading contributors to it. Millions of tonnes of paddy residue are burned every year, and this contributes to almost <strong className="text-primary">40-60 percent of PM</strong> in winter that results in smog that is dense and covers millions of people in the region.
+              </p>
+              <p className="text-lg leading-relaxed mb-6">
+                The health costs are terrifying - some research estimates that <strong className="text-destructive">44,000 - 98,000 premature deaths</strong> per year happen as a result of the pollution of residue burning.
+              </p>
+              <p className="text-lg leading-relaxed">
+                Burning is still taking place even with government intervention in the form of machinery subsidies, bio fuel programs, and fines. This is because the explanation is relatively simple and yet systemic: <strong className="text-primary">farmers do not have a structured, profitable and easily available market to sell their crop remnants.</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* The Problem Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="mb-6 text-primary">The Problem</h2>
+              <div className="space-y-4 text-lg">
+                <p>
+                  In Punjab, an average of over <strong className="text-primary">7 million tonnes</strong> of paddy straw are burnt every year.
+                </p>
+                <p>
+                  Farmers have very little time between harvest and planting, they lack buyers and their logistics are expensive. To the majority, burning is the quickest and the most cost effective solution to clear the fields.
+                </p>
+                <p className="text-primary-light font-semibold">
+                  Although they are ready to use sustainable practices in case of the existence of viable alternatives.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-2xl overflow-hidden shadow-large">
+              <img src={problemImage} alt="Stubble burning problem" className="w-full h-full object-cover" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* What We're Doing Section */}
+      <section className="py-16 bg-primary text-primary-foreground">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="mb-6">What We're Doing</h2>
+            <p className="text-xl leading-relaxed mb-8">
+              This platform aims at transforming that. Through linking farmers to bioenergy, paper and composting industries that can use stubble to generate energy, we will transform agricultural waste into job creation.
+            </p>
+            <div className="grid md:grid-cols-3 gap-6 mt-12">
+              <Card className="p-6 bg-primary-foreground/10 border-primary-foreground/20 text-center">
+                <Users className="w-12 h-12 mx-auto mb-4 text-secondary" />
+                <h3 className="text-xl font-bold mb-2">Connect</h3>
+                <p className="opacity-90">Link farmers with verified buyers</p>
+              </Card>
+              <Card className="p-6 bg-primary-foreground/10 border-primary-foreground/20 text-center">
+                <TrendingUp className="w-12 h-12 mx-auto mb-4 text-secondary" />
+                <h3 className="text-xl font-bold mb-2">Prosper</h3>
+                <p className="opacity-90">Turn waste into income streams</p>
+              </Card>
+              <Card className="p-6 bg-primary-foreground/10 border-primary-foreground/20 text-center">
+                <Leaf className="w-12 h-12 mx-auto mb-4 text-secondary" />
+                <h3 className="text-xl font-bold mb-2">Sustain</h3>
+                <p className="opacity-90">Reduce pollution & protect environment</p>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Vision Section */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <Shield className="w-16 h-16 mx-auto mb-6 text-primary" />
+            <h2 className="mb-6 text-primary">Our Vision</h2>
+            <p className="text-xl leading-relaxed">
+              To establish a <strong className="text-primary">circular, transparent and sustainable ecosystem</strong> enabling farmers, minimizing pollution and green innovation throughout Punjab.
+            </p>
+            <div className="mt-12">
+              <Link to="/trading">
+                <Button size="lg" className="gradient-green text-primary-foreground hover:opacity-90 text-lg px-8">
+                  Explore Trading Platform
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+};
+
+export default Home;
