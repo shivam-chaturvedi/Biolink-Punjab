@@ -1,28 +1,21 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu, X, Leaf, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userType, setUserType] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user, profile, signOut } = useAuth();
 
-  useEffect(() => {
-    const loggedInUser = localStorage.getItem("isLoggedIn");
-    const type = localStorage.getItem("userType");
-    setIsLoggedIn(loggedInUser === "true");
-    setUserType(type);
-  }, []);
+  const isLoggedIn = Boolean(user);
+  const userType = profile?.role;
 
-  const handleSignOut = () => {
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("userType");
-    setIsLoggedIn(false);
-    setUserType(null);
+  const handleSignOut = async () => {
+    await signOut();
     toast.success("Signed out successfully");
     navigate("/");
   };
@@ -33,33 +26,42 @@ const Navigation = () => {
     { to: "/trading", label: "Trading Platform" },
     { to: "/about", label: "About Us" },
     { to: "/services", label: "Services" },
-    { to: "/blog", label: "Blog" },
     { to: "/gallery", label: "Gallery" },
     { to: "/contact", label: "Contact" },
   ];
 
+  const actionButtonClasses =
+    "px-3 h-10 text-sm font-semibold tracking-wide whitespace-nowrap transition-smooth";
+
   return (
-    <nav className="sticky top-0 z-50 w-full glass shadow-soft">
-      <div className="container mx-auto px-4">
-        <div className="flex items-center justify-between h-16 md:h-20">
+    <nav className="sticky top-0 z-50 w-full glass shadow-soft border-b border-primary/10">
+      <div className="container mx-auto px-3 sm:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-3 md:gap-6 py-3">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2 group">
-            <div className="w-10 h-10 rounded-full gradient-green flex items-center justify-center transition-smooth group-hover:scale-110">
-              <Leaf className="w-6 h-6 text-primary-foreground" />
+          <Link
+            to="/"
+            className="flex min-w-0 flex-shrink items-center gap-2 pr-3 group"
+          >
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full gradient-green flex items-center justify-center transition-smooth group-hover:scale-105">
+              <Leaf className="w-5 h-5 md:w-6 md:h-6 text-primary-foreground" />
             </div>
-            <div>
-              <h1 className="text-xl font-bold text-primary">Biolink Punjab</h1>
-              <p className="text-xs text-muted-foreground hidden md:block">By Samaira Sapra</p>
+            <div className="min-w-0">
+              <h1 className="text-base sm:text-lg md:text-xl font-semibold text-primary leading-snug truncate">
+                Biolink Punjab
+              </h1>
+              <p className="hidden sm:block text-[11px] sm:text-sm text-muted-foreground">
+                Stubble Trading Platform
+              </p>
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center space-x-1">
+          <div className="hidden lg:flex flex-1 items-center justify-center gap-1 xl:gap-2">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:text-primary transition-smooth rounded-lg hover:bg-muted"
+                className="px-3 py-2 text-base font-medium text-muted-foreground hover:text-primary transition-smooth rounded-full hover:bg-muted"
               >
                 {link.label}
               </Link>
@@ -67,33 +69,47 @@ const Navigation = () => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="hidden lg:flex items-center space-x-2">
+          <div className="hidden lg:flex items-center gap-2 flex-shrink-0">
             {isLoggedIn ? (
               <>
-                <Link to={userType === "farmer" ? "/farmer-dashboard" : "/buyer-dashboard"}>
-                  <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                <Link
+                  to={userType === "farmer" ? "/farmer-dashboard" : "/buyer-dashboard"}
+                >
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`${actionButtonClasses} border-primary text-primary hover:bg-primary hover:text-primary-foreground`}
+                  >
+                    <LayoutDashboard className="w-4 h-4 mr-1.5" />
                     Dashboard
                   </Button>
                 </Link>
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   size="sm"
+                  className={`${actionButtonClasses} flex items-center justify-center`}
                   onClick={handleSignOut}
                 >
-                  <LogOut className="w-4 h-4 mr-2" />
+                  <LogOut className="w-4 h-4 mr-1.5" />
                   Sign Out
                 </Button>
               </>
             ) : (
               <>
                 <Link to="/farmer-login">
-                  <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground whitespace-nowrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={`${actionButtonClasses} border-primary text-primary hover:bg-primary hover:text-primary-foreground`}
+                  >
                     Farmer
                   </Button>
                 </Link>
                 <Link to="/buyer-login">
-                  <Button size="sm" className="gradient-green text-primary-foreground hover:opacity-90 whitespace-nowrap">
+                  <Button
+                    size="sm"
+                    className={`${actionButtonClasses} gradient-green text-primary-foreground hover:opacity-90`}
+                  >
                     Buyer
                   </Button>
                 </Link>
@@ -104,9 +120,9 @@ const Navigation = () => {
           {/* Mobile Menu Button */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="lg:hidden p-2 rounded-lg hover:bg-muted transition-smooth"
+            className="lg:hidden ml-auto rounded-lg p-2 hover:bg-muted transition-smooth"
           >
-            {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
 
@@ -117,13 +133,13 @@ const Navigation = () => {
             isOpen ? "max-h-screen pb-4" : "max-h-0"
           )}
         >
-          <div className="flex flex-col space-y-2 pt-4">
+          <div className="flex flex-col space-y-2 pt-4 text-lg">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-3 text-sm font-medium text-foreground hover:text-primary transition-smooth rounded-lg hover:bg-muted"
+                className="px-4 py-3 text-base font-semibold text-muted-foreground hover:text-primary transition-smooth rounded-lg hover:bg-muted"
               >
                 {link.label}
               </Link>
@@ -131,15 +147,21 @@ const Navigation = () => {
             <div className="flex flex-col space-y-2 pt-4 border-t">
               {isLoggedIn ? (
                 <>
-                  <Link to={userType === "farmer" ? "/farmer-dashboard" : "/buyer-dashboard"} onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full border-primary text-primary">
+                  <Link
+                    to={userType === "farmer" ? "/farmer-dashboard" : "/buyer-dashboard"}
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <Button
+                      variant="outline"
+                      className="w-full border-primary text-primary text-sm"
+                    >
                       <LayoutDashboard className="w-4 h-4 mr-2" />
                       Dashboard
                     </Button>
                   </Link>
                   <Button 
                     variant="destructive" 
-                    className="w-full"
+                    className="w-full text-sm"
                     onClick={() => {
                       handleSignOut();
                       setIsOpen(false);
@@ -152,12 +174,12 @@ const Navigation = () => {
               ) : (
                 <>
                   <Link to="/farmer-login" onClick={() => setIsOpen(false)}>
-                    <Button variant="outline" className="w-full border-primary text-primary">
+                    <Button variant="outline" className="w-full border-primary text-primary text-sm">
                       Farmer Login
                     </Button>
                   </Link>
                   <Link to="/buyer-login" onClick={() => setIsOpen(false)}>
-                    <Button className="w-full gradient-green text-primary-foreground">
+                    <Button className="w-full gradient-green text-primary-foreground text-sm">
                       Buyer Login
                     </Button>
                   </Link>

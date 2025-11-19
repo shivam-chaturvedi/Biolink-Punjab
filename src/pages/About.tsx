@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Target, Heart, Lightbulb, TrendingUp } from "lucide-react";
-import farmerPortrait from "@/assets/farmer-portrait.jpg";
+
+const farmerPortrait = "/images/goals-image.png";
 
 const About = () => {
   return (

@@ -1,32 +1,113 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2 } from "lucide-react";
 import { toast } from "sonner";
-import mustardField from "@/assets/mustard-field.jpg";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { PUNJAB_DISTRICTS } from "@/constants/punjabDistricts";
+
+const mustardField = "/images/mustard-field.jpg";
 
 const BuyerLogin = () => {
   const navigate = useNavigate();
+  const { user, profile, refreshProfile } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
     companyName: "",
     gstNumber: "",
     contactPerson: "",
     phone: "",
+    district: "",
+    customDistrict: "",
     password: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user && profile?.role === "buyer") {
+      navigate("/buyer-dashboard");
+    }
+  }, [user, profile, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userType", "buyer");
-    toast.success(isLogin ? "Welcome back!" : "Registration successful!");
-    navigate("/buyer-dashboard");
-    window.location.reload(); // Refresh to update navbar
+    setIsSubmitting(true);
+
+    if (isLogin) {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await refreshProfile();
+      toast.success("Welcome back!");
+      navigate("/buyer-dashboard");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const finalDistrict =
+      formData.district === "Other" ? formData.customDistrict : formData.district;
+
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: {
+          role: "buyer",
+          company_name: formData.companyName,
+          gst_number: formData.gstNumber,
+          contact_person: formData.contactPerson,
+          phone: formData.phone,
+          district: finalDistrict,
+        },
+      },
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (data.user) {
+      const profilePayload = {
+        id: data.user.id,
+        role: "buyer" as const,
+        company_name: formData.companyName,
+        gst_number: formData.gstNumber,
+        contact_person: formData.contactPerson,
+        phone: formData.phone,
+        district: finalDistrict,
+      };
+
+      const { error: profileError } = await supabase.from("profiles").upsert(profilePayload, {
+        onConflict: "id",
+      });
+
+      if (profileError) {
+        toast.error(profileError.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await refreshProfile();
+    }
+
+    toast.success("Registration successful!");
+    navigate("/");
+    setIsSubmitting(false);
   };
 
   return (
@@ -56,6 +137,41 @@ const BuyerLogin = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
             <>
+              <div>
+                <Label htmlFor="district">District</Label>
+                <select
+                  id="district"
+                  value={formData.district}
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    district: e.target.value,
+                    customDistrict: e.target.value === "Other" ? formData.customDistrict : "",
+                  })
+                }
+                  required
+                  className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                >
+                  <option value="" disabled>
+                    Select district
+                  </option>
+                  {PUNJAB_DISTRICTS.map((district) => (
+                    <option key={district} value={district}>
+                      {district}
+                    </option>
+                  ))}
+                </select>
+                {formData.district === "Other" && (
+                  <Input
+                    className="mt-3"
+                    placeholder="Enter district"
+                    value={formData.customDistrict}
+                    onChange={(e) => setFormData({ ...formData, customDistrict: e.target.value })}
+                    required
+                  />
+                )}
+              </div>
+
               <div>
                 <Label htmlFor="companyName">Company Name</Label>
                 <Input
@@ -133,8 +249,8 @@ const BuyerLogin = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full gradient-warm text-secondary-foreground">
-            {isLogin ? "Login" : "Register"}
+          <Button type="submit" className="w-full gradient-warm text-secondary-foreground" disabled={isSubmitting}>
+            {isSubmitting ? "Processing..." : isLogin ? "Login" : "Register"}
           </Button>
         </form>
 

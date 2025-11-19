@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 
 const FarmScene = lazy(() => import("@/components/3d/FarmScene").then(module => ({ default: module.FarmScene })));
-const FloatingStubble = lazy(() => import("@/components/3d/FloatingStubble").then(module => ({ default: module.FloatingStubble })));
 
 const Services = () => {
   return (
@@ -57,17 +56,6 @@ const Services = () => {
             <p className="text-lg text-muted-foreground font-light">
               Empowering farmers to turn agricultural waste into income
             </p>
-          </div>
-          
-          {/* 3D Stubble Visualization */}
-          <div className="mb-12">
-            <Suspense fallback={
-              <div className="w-full h-[400px] rounded-lg bg-muted animate-pulse flex items-center justify-center">
-                <p className="text-muted-foreground">Loading 3D Stubble...</p>
-              </div>
-            }>
-              <FloatingStubble />
-            </Suspense>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -1,10 +1,11 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar, User, ArrowRight } from "lucide-react";
-import problemImage from "@/assets/problem-image.png";
-import researchField from "@/assets/research-field.png";
-import mustardField from "@/assets/mustard-field.jpg";
-import farmerPortrait from "@/assets/farmer-portrait.jpg";
+
+const problemImage = "/images/problem-image.png";
+const researchField = "/images/research-field.png";
+const mustardField = "/images/mustard-field.jpg";
+const farmerPortrait = "/images/farmer-portrait.jpg";
 
 const Blog = () => {
   const blogPosts = [

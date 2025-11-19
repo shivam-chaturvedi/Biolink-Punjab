@@ -1,73 +1,46 @@
-# Welcome to your Lovable project
+# Biolink Punjab
 
-## Project info
+Biolink Punjab is a modern stubble trading platform that connects farmers and biomass buyers across the state. It provides dashboards, real-time stats, listings management, and responsive UI components to make collaboration faster and more transparent.
 
-**URL**: https://lovable.dev/projects/323ffeae-4213-44d3-ae87-59bd3d9344bf
+## Tech stack
 
-## How can I edit this code?
+- Vite + React 18 + TypeScript
+- Tailwind CSS & shadcn/ui component primitives
+- React Router for navigation
+- TanStack Query for async data utilities
 
-There are several ways of editing your application.
+## Local development
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/323ffeae-4213-44d3-ae87-59bd3d9344bf) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+```bash
+git clone <repo-url>
+cd Biolink-Punjab
+npm install
+cp .env.example .env.local
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+By default the dev server runs on `http://localhost:5173`. Update environment variables or API URLs inside the `src` directory as needed.
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### Supabase configuration
 
-**Use GitHub Codespaces**
+The app is wired to a live Supabase instance. Environment variables are provided in `.env.example`; copy them into `.env.local` (ignored by git) to enable API access.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+| Variable | Value |
+| -------- | ----- |
+| `VITE_SUPABASE_URL` | `https://ymiuiohsnywsgjvlhnrg.supabase.co` |
+| `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltaXVpb2hzbnl3c2dqdmxobnJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1Mjg1MDEsImV4cCI6MjA3OTEwNDUwMX0.BzGysZm8xbUBUct56JThWZwiMlu8JU0Zz_EmAxCJcr8` |
 
-## What technologies are used for this project?
+Database schema and policies can be created by running the SQL in [`supabase.sql`](./supabase.sql) inside the Supabase SQL editor or CLI.
 
-This project is built with:
+## Available scripts
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+| Command        | Description                           |
+| -------------- | ------------------------------------- |
+| `npm run dev`  | Start the local dev server            |
+| `npm run build`| Build the production bundle           |
+| `npm run lint` | Lint the codebase with ESLint         |
+| `npm run preview` | Preview the production build locally |
 
-## How can I deploy this project?
+## Deployment
 
-Simply open [Lovable](https://lovable.dev/projects/323ffeae-4213-44d3-ae87-59bd3d9344bf) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Build the project with `npm run build` and deploy the contents of the generated `dist/` folder to any static host (Netlify, Vercel, Cloudflare Pages, etc.).

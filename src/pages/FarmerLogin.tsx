@@ -1,31 +1,107 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Leaf, Phone } from "lucide-react";
 import { toast } from "sonner";
-import heroBackground from "@/assets/hero-background.jpg";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/contexts/AuthContext";
+import { PUNJAB_DISTRICTS } from "@/constants/punjabDistricts";
+
+const heroBackground = "/images/hero-background.jpg";
 
 const FarmerLogin = () => {
   const navigate = useNavigate();
+  const { user, profile, refreshProfile } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     phone: "",
     email: "",
     name: "",
     district: "",
+    customDistrict: "",
     password: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (user && profile?.role === "farmer") {
+      navigate("/farmer-dashboard");
+    }
+  }, [user, profile, navigate]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem("isLoggedIn", "true");
-    localStorage.setItem("userType", "farmer");
-    toast.success(isLogin ? "Welcome back!" : "Registration successful!");
-    navigate("/farmer-dashboard");
-    window.location.reload(); // Refresh to update navbar
+    setIsSubmitting(true);
+
+    if (isLogin) {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await refreshProfile();
+      toast.success("Welcome back!");
+      navigate("/farmer-dashboard");
+      setIsSubmitting(false);
+      return;
+    }
+
+    const finalDistrict =
+      formData.district === "Other" ? formData.customDistrict : formData.district;
+
+    const { data, error } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+      options: {
+        data: {
+          role: "farmer",
+          phone: formData.phone,
+          full_name: formData.name,
+          district: finalDistrict,
+        },
+      },
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (data.user) {
+      const profilePayload = {
+        id: data.user.id,
+        role: "farmer" as const,
+        full_name: formData.name,
+        phone: formData.phone,
+        district: finalDistrict,
+      };
+
+      const { error: profileError } = await supabase.from("profiles").upsert(profilePayload, {
+        onConflict: "id",
+      });
+
+      if (profileError) {
+        toast.error(profileError.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      await refreshProfile();
+    }
+
+    toast.success("Registration successful!");
+    navigate("/");
+    setIsSubmitting(false);
   };
 
   return (
@@ -67,18 +143,20 @@ const FarmerLogin = () => {
             </div>
           )}
 
-          <div>
-            <Label htmlFor="phone" className="font-semibold">Phone Number</Label>
-            <Input
-              id="phone"
-              type="tel"
-              value={formData.phone}
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+91 XXXXX XXXXX"
-              required
-              className="mt-2 h-11"
-            />
-          </div>
+          {!isLogin && (
+            <div>
+              <Label htmlFor="phone" className="font-semibold">Phone Number</Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                placeholder="+91 XXXXX XXXXX"
+                required
+                className="mt-2 h-11"
+              />
+            </div>
+          )}
 
           <div>
             <Label htmlFor="email" className="font-semibold">Email Address</Label>
@@ -96,14 +174,37 @@ const FarmerLogin = () => {
           {!isLogin && (
             <div>
               <Label htmlFor="district">District</Label>
-              <Input
+              <select
                 id="district"
                 value={formData.district}
-                onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                placeholder="Your district"
+                onChange={(e) =>
+                  setFormData({
+                    ...formData,
+                    district: e.target.value,
+                    customDistrict: e.target.value === "Other" ? formData.customDistrict : "",
+                  })
+                }
                 required
-                className="mt-2"
-              />
+                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+              >
+                <option value="" disabled>
+                  Select district
+                </option>
+                {PUNJAB_DISTRICTS.map((district) => (
+                  <option key={district} value={district}>
+                    {district}
+                  </option>
+                ))}
+              </select>
+              {formData.district === "Other" && (
+                <Input
+                  className="mt-3"
+                  placeholder="Enter district"
+                  value={formData.customDistrict}
+                  onChange={(e) => setFormData({ ...formData, customDistrict: e.target.value })}
+                  required
+                />
+              )}
             </div>
           )}
 
@@ -120,8 +221,8 @@ const FarmerLogin = () => {
             />
           </div>
 
-          <Button type="submit" className="w-full gradient-green text-primary-foreground">
-            {isLogin ? "Login" : "Register"}
+          <Button type="submit" className="w-full gradient-green text-primary-foreground" disabled={isSubmitting}>
+            {isSubmitting ? "Processing..." : isLogin ? "Login" : "Register"}
           </Button>
         </form>
 

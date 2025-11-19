@@ -1,51 +1,62 @@
-import heroBackground from "@/assets/hero-background.jpg";
-import problemImage from "@/assets/problem-image.png";
-import researchField from "@/assets/research-field.png";
-import farmerPortrait from "@/assets/farmer-portrait.jpg";
-import mustardField from "@/assets/mustard-field.jpg";
-import goalsImage from "@/assets/goals-image.png";
+import { useMemo, useState } from "react";
+
+const heroBackground = "/images/hero-background.jpg";
+const problemImage = "/images/problem-image.png";
+const researchField = "/images/research-field.png";
+const farmerPortrait = "/images/Farmer-buyer handshake.jpg";
+const mustardField = "/images/mustard-field.jpg";
+const goalsImage = "/images/goals-image.png";
+
+const galleryItemsData = [
+  {
+    title: "Aerial Field Views",
+    description: "Vast farmlands of Punjab during harvest season",
+    image: heroBackground,
+    category: "Landscapes",
+  },
+  {
+    title: "Stubble Burning Impact",
+    description: "Understanding the environmental challenge",
+    image: problemImage,
+    category: "Environmental",
+  },
+  {
+    title: "Field Research",
+    description: "Conducting surveys with Punjab farmers",
+    image: researchField,
+    category: "Research",
+  },
+  {
+    title: "Community Collaboration",
+    description: "Farmers and buyers aligning on sustainable goals",
+    image: farmerPortrait,
+    category: "People",
+  },
+  {
+    title: "Mustard Fields",
+    description: "Vibrant agricultural diversity in Punjab",
+    image: mustardField,
+    category: "Landscapes",
+  },
+  {
+    title: "Project Goals",
+    description: "Vision for a sustainable future",
+    image: goalsImage,
+    category: "Infographics",
+  },
+];
 
 const Gallery = () => {
-  const galleryItems = [
-    {
-      title: "Aerial Field Views",
-      description: "Vast farmlands of Punjab during harvest season",
-      image: heroBackground,
-      category: "Landscapes"
-    },
-    {
-      title: "Stubble Burning Impact",
-      description: "Understanding the environmental challenge",
-      image: problemImage,
-      category: "Environmental"
-    },
-    {
-      title: "Field Research",
-      description: "Conducting surveys with Punjab farmers",
-      image: researchField,
-      category: "Research"
-    },
-    {
-      title: "Farmer Portrait",
-      description: "The face of Punjab's agricultural community",
-      image: farmerPortrait,
-      category: "People"
-    },
-    {
-      title: "Mustard Fields",
-      description: "Vibrant agricultural diversity in Punjab",
-      image: mustardField,
-      category: "Landscapes"
-    },
-    {
-      title: "Project Goals",
-      description: "Vision for a sustainable future",
-      image: goalsImage,
-      category: "Infographics"
-    },
-  ];
 
   const categories = ["All", "Landscapes", "People", "Research", "Environmental", "Infographics"];
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+
+  const filteredItems = useMemo(() => {
+    if (activeCategory === "All") {
+      return galleryItemsData;
+    }
+    return galleryItemsData.filter((item) => item.category === activeCategory);
+  }, [activeCategory]);
 
   return (
     <div className="min-h-screen py-16">
@@ -63,7 +74,12 @@ const Gallery = () => {
           {categories.map((category) => (
             <button
               key={category}
-              className="px-6 py-2 rounded-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground transition-smooth"
+              onClick={() => setActiveCategory(category)}
+              className={`px-6 py-2 rounded-full border transition-smooth ${
+                activeCategory === category
+                  ? "bg-primary border-primary text-primary-foreground"
+                  : "border-primary text-primary hover:bg-primary hover:text-primary-foreground"
+              }`}
             >
               {category}
             </button>
@@ -72,7 +88,7 @@ const Gallery = () => {
 
         {/* Gallery Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-          {galleryItems.map((item, index) => (
+          {filteredItems.map((item, index) => (
             <div
               key={index}
               className="group relative overflow-hidden rounded-2xl shadow-medium hover:shadow-large transition-smooth cursor-pointer"
