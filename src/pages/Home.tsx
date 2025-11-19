@@ -28,13 +28,19 @@ const Home = () => {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center animate-slide-up">
             <Link to="/farmer-login">
-              <Button size="lg" className="bg-secondary text-secondary-foreground hover:bg-secondary/90 text-lg px-8">
+              <Button 
+                size="lg" 
+                className="gradient-green text-primary-foreground hover:opacity-90 text-lg px-8 shadow-large hover:shadow-xl transition-smooth"
+              >
                 Become a Seller (Farmers)
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
             <Link to="/buyer-login">
-              <Button size="lg" variant="outline" className="border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary text-lg px-8">
+              <Button 
+                size="lg" 
+                className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 border-2 border-primary-foreground text-lg px-8 shadow-large hover:shadow-xl transition-smooth font-bold"
+              >
                 Become a Buyer (Industries)
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>

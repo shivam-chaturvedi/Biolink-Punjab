@@ -22,8 +22,11 @@ const BuyerLogin = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userType", "buyer");
     toast.success(isLogin ? "Welcome back!" : "Registration successful!");
     navigate("/buyer-dashboard");
+    window.location.reload(); // Refresh to update navbar
   };
 
   return (

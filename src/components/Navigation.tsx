@@ -1,11 +1,31 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import { Menu, X, Leaf } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Menu, X, Leaf, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userType, setUserType] = useState<string | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const loggedInUser = localStorage.getItem("isLoggedIn");
+    const type = localStorage.getItem("userType");
+    setIsLoggedIn(loggedInUser === "true");
+    setUserType(type);
+  }, []);
+
+  const handleSignOut = () => {
+    localStorage.removeItem("isLoggedIn");
+    localStorage.removeItem("userType");
+    setIsLoggedIn(false);
+    setUserType(null);
+    toast.success("Signed out successfully");
+    navigate("/");
+  };
 
   const navLinks = [
     { to: "/", label: "Home" },
@@ -47,17 +67,38 @@ const Navigation = () => {
           </div>
 
           {/* CTA Buttons */}
-          <div className="hidden lg:flex items-center space-x-3">
-            <Link to="/farmer-login">
-              <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                Farmer Login
-              </Button>
-            </Link>
-            <Link to="/buyer-login">
-              <Button className="gradient-green text-primary-foreground hover:opacity-90">
-                Buyer Login
-              </Button>
-            </Link>
+          <div className="hidden lg:flex items-center space-x-2">
+            {isLoggedIn ? (
+              <>
+                <Link to={userType === "farmer" ? "/farmer-dashboard" : "/buyer-dashboard"}>
+                  <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                    <LayoutDashboard className="w-4 h-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
+                <Button 
+                  variant="destructive" 
+                  size="sm"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/farmer-login">
+                  <Button variant="outline" size="sm" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground whitespace-nowrap">
+                    Farmer
+                  </Button>
+                </Link>
+                <Link to="/buyer-login">
+                  <Button size="sm" className="gradient-green text-primary-foreground hover:opacity-90 whitespace-nowrap">
+                    Buyer
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile Menu Button */}
@@ -88,16 +129,40 @@ const Navigation = () => {
               </Link>
             ))}
             <div className="flex flex-col space-y-2 pt-4 border-t">
-              <Link to="/farmer-login" onClick={() => setIsOpen(false)}>
-                <Button variant="outline" className="w-full border-primary text-primary">
-                  Farmer Login
-                </Button>
-              </Link>
-              <Link to="/buyer-login" onClick={() => setIsOpen(false)}>
-                <Button className="w-full gradient-green text-primary-foreground">
-                  Buyer Login
-                </Button>
-              </Link>
+              {isLoggedIn ? (
+                <>
+                  <Link to={userType === "farmer" ? "/farmer-dashboard" : "/buyer-dashboard"} onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full border-primary text-primary">
+                      <LayoutDashboard className="w-4 h-4 mr-2" />
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <Button 
+                    variant="destructive" 
+                    className="w-full"
+                    onClick={() => {
+                      handleSignOut();
+                      setIsOpen(false);
+                    }}
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/farmer-login" onClick={() => setIsOpen(false)}>
+                    <Button variant="outline" className="w-full border-primary text-primary">
+                      Farmer Login
+                    </Button>
+                  </Link>
+                  <Link to="/buyer-login" onClick={() => setIsOpen(false)}>
+                    <Button className="w-full gradient-green text-primary-foreground">
+                      Buyer Login
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
