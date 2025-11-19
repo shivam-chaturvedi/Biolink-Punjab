@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,15 +22,16 @@ import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUNJAB_DISTRICTS } from "@/constants/punjabDistricts";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogClose,
-} from "@/components/ui/dialog";
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 interface Interest {
   id: string;
@@ -58,7 +59,6 @@ interface Listing {
   district: string | null;
   needs_transport: boolean;
   status: string | null;
-  interested_buyers: number | null;
   created_at: string;
   interests?: Interest[];
 }
@@ -75,7 +75,7 @@ const FarmerDashboard = () => {
     customDistrict: "",
     needsTransport: false,
   });
-  const [viewListingId, setViewListingId] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   const {
     data: listings = [],
@@ -96,7 +96,6 @@ const FarmerDashboard = () => {
           district,
           needs_transport,
           status,
-          interested_buyers,
           created_at,
           interests:listing_interests (
             id,
@@ -121,7 +120,6 @@ const FarmerDashboard = () => {
       if (error) {
         throw new Error(error.message);
       }
-
       return data as Listing[];
     },
     enabled: Boolean(user),
@@ -167,18 +165,7 @@ const FarmerDashboard = () => {
     refetch();
   };
 
-  const handleInterestAction = async (interestId: string, status: "approved" | "rejected") => {
-    const { error } = await supabase.from("listing_interests").update({ status }).eq("id", interestId);
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
-    toast.success(`Interest ${status}`);
-    refetch();
-  };
-
-  const getInterestCount = (listing: Listing) =>
-    listing.interests ? listing.interests.length : listing.interested_buyers || 0;
+  const getInterestCount = (listing: Listing) => (listing.interests ? listing.interests.length : 0);
 
   const totalQuantity = listings.reduce((sum, listing) => sum + (listing.quantity || 0), 0);
   const totalInterested = listings.reduce((sum, listing) => sum + getInterestCount(listing), 0);
@@ -186,11 +173,6 @@ const FarmerDashboard = () => {
     (sum, listing) => sum + (listing.quantity || 0) * (listing.price_per_quintal || 0),
     0
   );
-  const selectedListing = useMemo(
-    () => listings.find((listing) => listing.id === viewListingId),
-    [listings, viewListingId]
-  );
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -402,7 +384,12 @@ const FarmerDashboard = () => {
                 <Card className="p-6 text-center text-muted-foreground">No listings yet. Create your first listing to get started.</Card>
               ) : (
                 listings.map((listing) => (
-                  <Card key={listing.id} className="p-6 hover:shadow-medium transition-smooth">
+                  <Card
+                    key={listing.id}
+                    className="p-6 hover:shadow-medium transition-smooth cursor-pointer"
+                    onClick={() => navigate(`/farmer-dashboard/listings/${listing.id}`)}
+                    role="button"
+                  >
                     <div className="flex items-start justify-between mb-4">
                       <div>
                         <h3 className="text-xl font-bold text-primary">{listing.crop_type} Stubble</h3>
@@ -435,177 +422,52 @@ const FarmerDashboard = () => {
                         <p className="font-semibold text-secondary">{getInterestCount(listing)} buyers</p>
                       </div>
                     </div>
-                  <div className="flex gap-3">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-destructive text-destructive"
-                      onClick={() => handleDeleteListing(listing.id)}
-                    >
-                      <Trash className="w-4 h-4 mr-2" />
-                      Remove
-                    </Button>
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button
-                          size="sm"
-                          className="gradient-green text-primary-foreground ml-auto"
-                          onClick={() => setViewListingId(listing.id)}
-                        >
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Details
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl border border-primary/20 shadow-2xl">
-                        <DialogHeader>
-                          <DialogTitle className="text-2xl text-primary">
-                            {listing.crop_type} Stubble
-                          </DialogTitle>
-                          <DialogDescription className="text-base">
-                            A quick overview of your listing performance.
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid sm:grid-cols-2 gap-4 py-4 text-sm">
-                          <div className="rounded-xl bg-muted p-4">
-                            <p className="text-muted-foreground text-xs uppercase">Quantity</p>
-                            <p className="text-xl font-semibold">{listing.quantity} quintals</p>
-                          </div>
-                          <div className="rounded-xl bg-muted p-4">
-                            <p className="text-muted-foreground text-xs uppercase">Price</p>
-                            <p className="text-xl font-semibold">₹{listing.price_per_quintal}</p>
-                          </div>
-                          <div className="rounded-xl bg-muted p-4">
-                            <p className="text-muted-foreground text-xs uppercase">District</p>
-                            <p className="text-lg">{listing.district || "N/A"}</p>
-                          </div>
-                          <div className="rounded-xl bg-muted p-4">
-                            <p className="text-muted-foreground text-xs uppercase">Transport</p>
-                            <p className="text-lg">
-                              {listing.needs_transport ? "Required" : "Not required"}
-                            </p>
-                          </div>
-                          <div className="rounded-xl bg-muted p-4">
-                            <p className="text-muted-foreground text-xs uppercase">Interested Buyers</p>
-                            <p className="text-xl font-semibold">
-                              {getInterestCount(listing)}
-                            </p>
-                          </div>
-                          <div className="rounded-xl bg-muted p-4">
-                            <p className="text-muted-foreground text-xs uppercase">Status</p>
-                            <p className="text-xl font-semibold">{listing.status || "Active"}</p>
-                        </div>
-                        <div className="rounded-xl bg-muted p-4 col-span-full">
-                          <p className="text-muted-foreground text-xs uppercase">Created</p>
-                          <p className="text-lg">
-                            {listing.created_at
-                              ? new Date(listing.created_at).toLocaleString()
-                              : "—"}
-                          </p>
-                        </div>
-                        <div className="col-span-full space-y-3">
-                          <p className="text-muted-foreground text-xs uppercase">Interested Buyers</p>
-                          {listing.interests && listing.interests.length > 0 ? (
-                            listing.interests.map((interest) => (
-                              <Card key={interest.id} className="p-4 border border-primary/20 bg-background">
-                                <div className="flex items-center justify-between mb-2">
-                                  <div>
-                                    <p className="font-semibold">
-                                      {interest.buyer?.full_name || "Buyer"}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      {interest.buyer_location || interest.buyer?.district || "Location not shared"}
-                                    </p>
-                                    <p className="text-sm text-muted-foreground">
-                                      Contact: {interest.buyer?.phone || "—"}
-                                    </p>
-                                  </div>
-                                  <span
-                                    className={`px-2 py-1 text-xs rounded-full ${
-                                      interest.status === "approved"
-                                        ? "bg-green-100 text-green-700"
-                                        : interest.status === "rejected"
-                                        ? "bg-red-100 text-red-700"
-                                        : "bg-amber-100 text-amber-700"
-                                    }`}
-                                  >
-                                    {interest.status}
-                                  </span>
-                                </div>
-                                <div className="grid sm:grid-cols-2 gap-3 text-sm">
-                                  <p>
-                                    <strong>Quantity:</strong> {interest.quantity ?? "—"} quintals
-                                  </p>
-                                  <p>
-                                    <strong>Offer Price:</strong> ₹{interest.offered_price ?? "—"}
-                                  </p>
-                                  {interest.message && (
-                                    <p className="sm:col-span-2">
-                                      <strong>Message:</strong> {interest.message}
-                                    </p>
-                                  )}
-                                </div>
-                                {interest.status === "pending" && (
-                                  <div className="flex gap-3 mt-4">
-                                    <Button
-                                      size="sm"
-                                      className="gradient-green text-primary-foreground"
-                                      onClick={() => handleInterestAction(interest.id, "approved")}
-                                    >
-                                      Approve
-                                    </Button>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      className="border-destructive text-destructive"
-                                      onClick={() => handleInterestAction(interest.id, "rejected")}
-                                    >
-                                      Reject
-                                    </Button>
-                                  </div>
-                                )}
-                              </Card>
-                            ))
-                          ) : (
-                            <p className="text-sm text-muted-foreground">No buyer interest yet.</p>
-                          )}
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button variant="outline">Close</Button>
-                        </DialogClose>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                    {listing.interests && listing.interests.length > 0 && (
-                      <div className="mt-4 w-full space-y-3">
-                        <p className="text-sm font-semibold text-primary">Interested Buyers</p>
-                        {listing.interests.map((interest) => (
-                          <Card key={interest.id} className="p-4 border border-primary/20 bg-background">
-                            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                              <div>
-                                <p className="font-semibold">{interest.buyer?.full_name || "Buyer"}</p>
-                                <p className="text-sm text-muted-foreground">
-                                  {interest.buyer_location || interest.buyer?.district || "Location not shared"}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  Contact: {interest.buyer?.phone || "Not provided"}
-                                </p>
-                              </div>
-                              {interest.buyer?.phone && (
-                                <Button asChild size="sm" variant="outline">
-                                  <a href={`tel:${interest.buyer.phone}`}>Call Buyer</a>
-                                </Button>
-                              )}
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </Card>
-              ))
-            )}
+                    <p className="text-sm text-muted-foreground mb-4">
+                      Click anywhere on this card to open detailed buyer information in a dedicated view.
+                    </p>
+                    <div className="flex gap-3">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="border-destructive text-destructive"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            <Trash className="w-4 h-4 mr-2" />
+                            Remove
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this listing?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This action cannot be undone and will remove all buyer interests tied to this listing.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteListing(listing.id)}>
+                              Delete Listing
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                      <Button
+                        size="sm"
+                        className="gradient-green text-primary-foreground ml-auto"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          navigate(`/farmer-dashboard/listings/${listing.id}`);
+                        }}
+                      >
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Interested Buyers
+                      </Button>
+                    </div>
+                  </Card>
+                ))
+              )}
             </div>
           </div>
 

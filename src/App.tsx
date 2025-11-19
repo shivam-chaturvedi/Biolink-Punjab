@@ -17,6 +17,7 @@ import FarmerLogin from "./pages/FarmerLogin";
 import BuyerLogin from "./pages/BuyerLogin";
 import FarmerDashboard from "./pages/FarmerDashboard";
 import BuyerDashboard from "./pages/BuyerDashboard";
+import FarmerListingDetails from "./pages/FarmerListingDetails";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/farmer-login" element={<FarmerLogin />} />
                 <Route path="/buyer-login" element={<BuyerLogin />} />
                 <Route path="/farmer-dashboard" element={<FarmerDashboard />} />
+                <Route path="/farmer-dashboard/listings/:id" element={<FarmerListingDetails />} />
                 <Route path="/buyer-dashboard" element={<BuyerDashboard />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>

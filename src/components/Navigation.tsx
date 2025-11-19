@@ -5,6 +5,17 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogCancel,
+  AlertDialogAction,
+} from "@/components/ui/alert-dialog";
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -18,6 +29,11 @@ const Navigation = () => {
     await signOut();
     toast.success("Signed out successfully");
     navigate("/");
+  };
+
+  const handleMobileSignOut = async () => {
+    await handleSignOut();
+    setIsOpen(false);
   };
 
   const navLinks = [
@@ -84,15 +100,30 @@ const Navigation = () => {
                     Dashboard
                   </Button>
                 </Link>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className={`${actionButtonClasses} flex items-center justify-center`}
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="w-4 h-4 mr-1.5" />
-                  Sign Out
-                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      className={`${actionButtonClasses} flex items-center justify-center`}
+                    >
+                      <LogOut className="w-4 h-4 mr-1.5" />
+                      Sign Out
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Sign out?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        You will need to log in again to access your dashboard.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Stay Logged In</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </>
             ) : (
               <>
@@ -159,17 +190,26 @@ const Navigation = () => {
                       Dashboard
                     </Button>
                   </Link>
-                  <Button 
-                    variant="destructive" 
-                    className="w-full text-sm"
-                    onClick={() => {
-                      handleSignOut();
-                      setIsOpen(false);
-                    }}
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button variant="destructive" className="w-full text-sm">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Ready to sign out?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Confirm to end your session and return to the homepage.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Maybe Later</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleMobileSignOut}>Sign Out</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </>
               ) : (
                 <>

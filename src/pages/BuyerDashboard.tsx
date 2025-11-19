@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,16 @@ interface Listing {
   owner_profile?: OwnerProfile | null;
 }
 
+interface BuyerInterest {
+  id: string;
+  listing_id: string;
+  status: string;
+  quantity: number | null;
+  message: string | null;
+  offered_price: number | null;
+  created_at: string;
+}
+
 const BuyerDashboard = () => {
   const { user, profile, loading } = useAuth();
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,7 +59,11 @@ const BuyerDashboard = () => {
   const [interestQuantity, setInterestQuantity] = useState("");
   const [interestPrice, setInterestPrice] = useState("");
   const [interestLocation, setInterestLocation] = useState("");
+  const [interestCoordinates, setInterestCoordinates] = useState<{ lat: number; lng: number } | null>(
+    null
+  );
   const [submittingInterest, setSubmittingInterest] = useState(false);
+  const [interestListing, setInterestListing] = useState<Listing | null>(null);
 
   const {
     data: listings = [],
@@ -102,6 +116,35 @@ const BuyerDashboard = () => {
     },
   });
 
+  const { data: buyerInterests = [] } = useQuery<BuyerInterest[]>({
+    queryKey: ["buyerInterests", user?.id],
+    queryFn: async () => {
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from("listing_interests")
+        .select("id, listing_id, status, quantity, message, offered_price, created_at")
+        .eq("buyer_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        throw new Error(error.message);
+      }
+      return (data as BuyerInterest[]) || [];
+    },
+    enabled: Boolean(user),
+  });
+
+  const interestByListing = useMemo(() => {
+    const map = new Map<string, BuyerInterest>();
+    buyerInterests.forEach((interest) => {
+      const existing = map.get(interest.listing_id);
+      if (!existing || existing.created_at < interest.created_at) {
+        map.set(interest.listing_id, interest);
+      }
+    });
+    return map;
+  }, [buyerInterests]);
+
   const filteredListings = useMemo(() => {
     return listings.filter((listing) => {
       const matchesCrop = listing.crop_type
@@ -117,7 +160,6 @@ const BuyerDashboard = () => {
   const totalQuantity = filteredListings.reduce((sum, listing) => sum + (listing.quantity || 0), 0);
   const totalDistricts = new Set(filteredListings.map((listing) => listing.district)).size;
   const activeFarmers = new Set(filteredListings.map((listing) => listing.owner_id)).size;
-  const [interestListing, setInterestListing] = useState<Listing | null>(null);
 
   const openInterestDialog = (listing: Listing) => {
     setInterestListing(listing);
@@ -181,9 +223,10 @@ const BuyerDashboard = () => {
     }
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        setInterestLocation(
-          `${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`
-        );
+        const lat = Number(position.coords.latitude.toFixed(4));
+        const lng = Number(position.coords.longitude.toFixed(4));
+        setInterestLocation(`${lat}, ${lng}`);
+        setInterestCoordinates({ lat, lng });
         toast.success("Location captured");
       },
       () => toast.error("Unable to fetch your location")
@@ -289,45 +332,96 @@ const BuyerDashboard = () => {
             ) : filteredListings.length === 0 ? (
               <Card className="p-6 text-center text-muted-foreground">No listings match your criteria yet.</Card>
             ) : (
-              filteredListings.map((listing) => (
-                <Card
-                  key={listing.id}
-                  className="p-6 hover:shadow-medium transition-smooth flex flex-col gap-4"
-                >
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-                    <div className="space-y-2">
-                      <h3 className="text-xl font-bold text-secondary">{listing.crop_type} Stubble</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Farmer: {listing.owner_profile?.full_name || "Unknown"}
-                      </p>
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <MapPin className="w-4 h-4" />
-                        {listing.district || listing.owner_profile?.district || "NA"}
+              filteredListings.map((listing) => {
+                const currentInterest = interestByListing.get(listing.id);
+                const statusBadgeClass =
+                  currentInterest?.status === "approved"
+                    ? "bg-green-100 text-green-700"
+                    : currentInterest?.status === "rejected"
+                    ? "bg-red-100 text-red-700"
+                    : "bg-amber-100 text-amber-700";
+                const hasInterest = Boolean(currentInterest);
+                const canCallFarmer =
+                  Boolean(listing.owner_profile?.phone) && currentInterest?.status === "approved";
+                const callRestrictionMessage = !listing.owner_profile?.phone
+                  ? "Farmer has not shared a phone number."
+                  : !hasInterest
+                  ? "Submit an interest request before contacting the farmer."
+                  : "Wait until the farmer approves your interest to call.";
+                const contactText = canCallFarmer
+                  ? listing.owner_profile?.phone || "—"
+                  : !hasInterest
+                  ? "Contact shared after you submit an interest request"
+                  : "Contact shared after farmer approval";
+
+                return (
+                  <Card
+                    key={listing.id}
+                    className="p-6 hover:shadow-medium transition-smooth flex flex-col gap-4"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-bold text-secondary">{listing.crop_type} Stubble</h3>
+                        <p className="text-sm text-muted-foreground">
+                          Farmer: {listing.owner_profile?.full_name || "Unknown"}
+                        </p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="w-4 h-4" />
+                          {listing.district || listing.owner_profile?.district || "NA"}
+                        </div>
+                      </div>
+                      <div className="text-left sm:text-right">
+                        <p className="text-2xl font-bold text-secondary">
+                          ₹{listing.price_per_quintal?.toLocaleString()}
+                        </p>
+                        <p className="text-sm text-muted-foreground">per quintal</p>
                       </div>
                     </div>
-                    <div className="text-left sm:text-right">
-                      <p className="text-2xl font-bold text-secondary">
-                        ₹{listing.price_per_quintal?.toLocaleString()}
-                      </p>
-                      <p className="text-sm text-muted-foreground">per quintal</p>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="flex items-center gap-2">
+                        <Package className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-semibold">{listing.quantity} quintals</span>
+                      </div>
+                      {currentInterest && (
+                        <div className="flex flex-col gap-1 sm:items-end">
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${statusBadgeClass}`}>
+                            {currentInterest.status === "approved"
+                              ? "Approved by farmer"
+                              : currentInterest.status === "rejected"
+                              ? "Rejected"
+                              : "Pending farmer approval"}
+                          </span>
+                          <p className="text-xs text-muted-foreground">
+                            {currentInterest.status === "approved"
+                              ? "Farmer approved your request. You can now contact them directly."
+                              : currentInterest.status === "rejected"
+                              ? "Request rejected. Update your offer or contact support."
+                              : "Awaiting farmer response."}
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4 text-muted-foreground" />
-                      <span className="font-semibold">{listing.quantity} quintals</span>
-                    </div>
+
                     <div className="flex flex-col xs:flex-row gap-3 sm:flex-nowrap w-full sm:w-auto">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        asChild
-                        disabled={!listing.owner_profile?.phone}
-                      >
-                        <a href={listing.owner_profile?.phone ? `tel:${listing.owner_profile.phone}` : undefined}>
+                      {canCallFarmer ? (
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={`tel:${listing.owner_profile?.phone}`}>
+                            <Phone className="w-4 h-4 mr-1" /> Call Farmer
+                          </a>
+                        </Button>
+                      ) : (
+                        <Button variant="outline" size="sm" disabled title={callRestrictionMessage}>
                           <Phone className="w-4 h-4 mr-1" /> Call Farmer
-                        </a>
-                      </Button>
+                        </Button>
+                      )}
+                      {!canCallFarmer && listing.owner_profile?.phone && (
+                        <p className="text-xs text-muted-foreground sm:self-center text-left">
+                          {!hasInterest
+                            ? "Send an interest request to unlock farmer contact details."
+                            : "You will receive the farmer's contact information once they approve your request."}
+                        </p>
+                      )}
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -368,25 +462,21 @@ const BuyerDashboard = () => {
                             </div>
                             <div className="rounded-xl bg-muted p-4">
                               <p className="text-muted-foreground text-xs uppercase">Contact</p>
-                              <p className="text-lg">{listing.owner_profile?.phone || "—"}</p>
+                              <p className="text-lg">{contactText}</p>
+                              {!canCallFarmer && listing.owner_profile?.phone && (
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  The phone number becomes available once your interest is approved.
+                                </p>
+                              )}
                             </div>
-                        <div className="rounded-xl bg-muted p-4">
-                          <p className="text-muted-foreground text-xs uppercase">Farmer</p>
-                          <p className="text-lg">{listing.owner_profile?.full_name || "Unknown"}</p>
-                          <p className="text-sm text-muted-foreground">
-                            {listing.owner_profile?.phone || "Contact not shared"}
-                          </p>
-                        </div>
-                        <div className="rounded-xl bg-muted p-4">
-                          <p className="text-muted-foreground text-xs uppercase">Farmer District</p>
-                          <p className="text-lg">{listing.owner_profile?.district || "Punjab"}</p>
-                        </div>
-                        <div className="rounded-xl bg-muted p-4 col-span-full">
-                          <p className="text-muted-foreground text-xs uppercase">Created</p>
-                          <p className="text-lg">
-                            {listing.created_at
-                              ? new Date(listing.created_at).toLocaleString()
-                              : "—"}
+                            <div className="rounded-xl bg-muted p-4">
+                              <p className="text-muted-foreground text-xs uppercase">Farmer District</p>
+                              <p className="text-lg">{listing.owner_profile?.district || "Punjab"}</p>
+                            </div>
+                            <div className="rounded-xl bg-muted p-4 col-span-full">
+                              <p className="text-muted-foreground text-xs uppercase">Created</p>
+                              <p className="text-lg">
+                                {listing.created_at ? new Date(listing.created_at).toLocaleString() : "—"}
                               </p>
                             </div>
                           </div>
@@ -448,14 +538,22 @@ const BuyerDashboard = () => {
                                 onChange={(e) => setInterestLocation(e.target.value)}
                                 required
                               />
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={handleUseCurrentLocation}
-                              >
+                              <Button type="button" variant="outline" size="sm" onClick={handleUseCurrentLocation}>
                                 Use Current Location
                               </Button>
+                              {interestCoordinates && (
+                                <div className="rounded-lg border border-secondary/30 overflow-hidden">
+                                  <p className="text-xs text-muted-foreground px-3 py-2">
+                                    Location preview
+                                  </p>
+                                  <iframe
+                                    title="Buyer location preview"
+                                    src={`https://www.google.com/maps?q=${interestCoordinates.lat},${interestCoordinates.lng}&z=14&output=embed`}
+                                    className="w-full h-48"
+                                    loading="lazy"
+                                  />
+                                </div>
+                              )}
                             </div>
                             <Textarea
                               placeholder="Add a message for the farmer"
@@ -477,9 +575,9 @@ const BuyerDashboard = () => {
                         </DialogContent>
                       </Dialog>
                     </div>
-                  </div>
-                </Card>
-              ))
+                  </Card>
+                );
+              })
             )}
           </div>
 
@@ -500,5 +598,4 @@ const BuyerDashboard = () => {
     </div>
   );
 };
-
 export default BuyerDashboard;
