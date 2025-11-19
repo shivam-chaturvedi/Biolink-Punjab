@@ -13,6 +13,7 @@ const FarmerLogin = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     phone: "",
+    email: "",
     name: "",
     district: "",
     password: ""
@@ -20,8 +21,11 @@ const FarmerLogin = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    localStorage.setItem("isLoggedIn", "true");
+    localStorage.setItem("userType", "farmer");
     toast.success(isLogin ? "Welcome back!" : "Registration successful!");
     navigate("/farmer-dashboard");
+    window.location.reload(); // Refresh to update navbar
   };
 
   return (
@@ -64,7 +68,7 @@ const FarmerLogin = () => {
           )}
 
           <div>
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone" className="font-semibold">Phone Number</Label>
             <Input
               id="phone"
               type="tel"
@@ -72,7 +76,20 @@ const FarmerLogin = () => {
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               placeholder="+91 XXXXX XXXXX"
               required
-              className="mt-2"
+              className="mt-2 h-11"
+            />
+          </div>
+
+          <div>
+            <Label htmlFor="email" className="font-semibold">Email Address</Label>
+            <Input
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+              placeholder="your.email@example.com"
+              required
+              className="mt-2 h-11"
             />
           </div>
 
