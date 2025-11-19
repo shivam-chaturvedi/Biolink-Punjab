@@ -1,6 +1,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Suspense, lazy } from "react";
 import { 
   ShoppingBag, 
   TrendingUp, 
@@ -12,29 +13,63 @@ import {
   Filter,
   Phone,
   FileText,
-  Info
+  Info,
+  Sparkles
 } from "lucide-react";
+
+const FarmScene = lazy(() => import("@/components/3d/FarmScene").then(module => ({ default: module.FarmScene })));
+const FloatingStubble = lazy(() => import("@/components/3d/FloatingStubble").then(module => ({ default: module.FloatingStubble })));
 
 const Services = () => {
   return (
     <div className="min-h-screen py-16">
       <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="text-center mb-16">
-          <h1 className="mb-4 text-primary">Our Services</h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+        {/* Header with 3D Scene */}
+        <div className="text-center mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6 animate-fade-in">
+            <Sparkles className="w-4 h-4" />
+            <span className="text-sm font-semibold">Interactive 3D Experience</span>
+          </div>
+          <h1 className="mb-4 text-primary font-display">Our Services</h1>
+          <p className="text-xl text-muted-foreground max-w-3xl mx-auto font-light">
             Comprehensive solutions for farmers and buyers to trade stubble efficiently and sustainably
+          </p>
+        </div>
+
+        {/* 3D Farm Scene */}
+        <div className="mb-20">
+          <Suspense fallback={
+            <div className="w-full h-[500px] rounded-lg bg-muted animate-pulse flex items-center justify-center">
+              <p className="text-muted-foreground">Loading 3D Farm Scene...</p>
+            </div>
+          }>
+            <FarmScene />
+          </Suspense>
+          <p className="text-center text-sm text-muted-foreground mt-4 font-light">
+            Drag to rotate • Scroll to zoom • Auto-rotating 3D farm visualization
           </p>
         </div>
 
         {/* Farmer Services */}
         <section className="mb-20">
           <div className="text-center mb-12">
-            <h2 className="text-primary mb-4">Farmer Services</h2>
-            <p className="text-lg text-muted-foreground">
+            <h2 className="text-primary mb-4 font-display">Farmer Services</h2>
+            <p className="text-lg text-muted-foreground font-light">
               Empowering farmers to turn agricultural waste into income
             </p>
           </div>
+          
+          {/* 3D Stubble Visualization */}
+          <div className="mb-12">
+            <Suspense fallback={
+              <div className="w-full h-[400px] rounded-lg bg-muted animate-pulse flex items-center justify-center">
+                <p className="text-muted-foreground">Loading 3D Stubble...</p>
+              </div>
+            }>
+              <FloatingStubble />
+            </Suspense>
+          </div>
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="p-6 hover:shadow-large transition-smooth">
               <div className="w-12 h-12 rounded-full gradient-green flex items-center justify-center mb-4">
