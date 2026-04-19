@@ -1,6 +1,6 @@
-# Biolink Punjab
+# Biolink भारत
 
-Biolink Punjab is a modern stubble trading platform that connects farmers and biomass buyers across the state. It provides dashboards, real-time stats, listings management, and responsive UI components to make collaboration faster and more transparent.
+Biolink भारत is a modern stubble trading platform that connects farmers and biomass buyers across the state. It provides dashboards, real-time stats, listings management, and responsive UI components to make collaboration faster and more transparent.
 
 ## Tech stack
 

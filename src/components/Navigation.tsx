@@ -63,7 +63,15 @@ const Navigation = () => {
             </div>
             <div className="min-w-0">
               <h1 className="text-base sm:text-lg md:text-xl font-semibold text-primary leading-snug truncate">
-                Biolink Punjab
+                <span className="inline-flex items-center gap-2 min-w-0">
+                  <span className="truncate">Biolink भारत</span>
+                  <img
+                    src="/images/bharat-logo.jpg"
+                    alt="Bharat logo"
+                    className="w-[1.95rem] h-[1.95rem] sm:w-[2.275rem] sm:h-[2.275rem] object-contain flex-shrink-0 rounded-sm"
+                    decoding="async"
+                  />
+                </span>
               </h1>
               <p className="hidden sm:block text-[11px] sm:text-sm text-muted-foreground">
                 Stubble Trading Platform

@@ -19,7 +19,16 @@ const Footer = () => {
                 <Leaf className="w-7 h-7" />
               </div>
               <div>
-                <h3 className="text-2xl font-bold">Biolink Punjab</h3>
+                <h3 className="text-2xl font-bold inline-flex items-center gap-2">
+                  <span>Biolink भारत</span>
+                  <img
+                    src="/images/bharat-logo.jpg"
+                    alt="Bharat logo"
+                    className="w-[2.6rem] h-[2.6rem] object-contain flex-shrink-0 rounded-sm"
+                    decoding="async"
+                    loading="lazy"
+                  />
+                </h3>
                 <p className="text-sm opacity-80">By Samaira Sapra</p>
               </div>
             </div>
@@ -88,7 +97,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-primary-foreground/20 mt-12 pt-8 flex flex-col md:flex-row items-center justify-between text-sm opacity-80 gap-4">
-          <p>&copy; {new Date().getFullYear()} Biolink Punjab. Created by Samaira Sapra.</p>
+          <p>&copy; {new Date().getFullYear()} Biolink भारत. Created by Samaira Sapra.</p>
           <div className="flex gap-6">
             <Link to="/contact" className="hover:opacity-100 opacity-80">Support</Link>
             <span className="opacity-50">•</span>

@@ -25,7 +25,7 @@ const About = () => {
               <h2 className="mb-6 text-primary">Who We Are</h2>
               <div className="space-y-4 text-lg">
                 <p>
-                  <strong className="text-primary">Biolink Punjab</strong> is a pioneering initiative created by <strong>Samaira Sapra</strong> to address one of North India's most pressing environmental challenges.
+                  <strong className="text-primary">Biolink भारत</strong> is a pioneering initiative created by <strong>Samaira Sapra</strong> to address one of North India's most pressing environmental challenges.
                 </p>
                 <p>
                   We are a sustainable circular-economy platform that connects Punjab's farmers directly with biomass industries, transforming agricultural waste into valuable resources.
@@ -85,9 +85,9 @@ const About = () => {
           </div>
         </section>
 
-        {/* Why Biolink Punjab */}
+        {/* Why Biolink भारत */}
         <section className="mb-16">
-          <h2 className="text-center mb-12 text-primary">Why Biolink Punjab?</h2>
+          <h2 className="text-center mb-12 text-primary">Why Biolink भारत?</h2>
           <div className="max-w-5xl mx-auto">
             <div className="grid md:grid-cols-2 gap-8">
               <Card className="p-8 border-l-4 border-l-primary">
@@ -129,7 +129,7 @@ const About = () => {
               <strong className="text-primary">Samaira Sapra</strong> is a passionate environmental advocate and innovator dedicated to solving Punjab's stubble burning crisis.
             </p>
             <p className="text-lg mb-4">
-              Through extensive field research and collaboration with farmers across Punjab, Samaira identified the critical gap in the market and developed Biolink Punjab as a comprehensive solution.
+              Through extensive field research and collaboration with farmers across Punjab, Samaira identified the critical gap in the market and developed Biolink भारत as a comprehensive solution.
             </p>
             <p className="text-lg text-primary-light font-semibold">
               "Farmers are not unwilling to change—they are simply unequipped. Our mission is to equip them with the tools and market access they need to thrive sustainably."
