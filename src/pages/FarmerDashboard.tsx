@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -173,6 +173,18 @@ const FarmerDashboard = () => {
     (sum, listing) => sum + (listing.quantity || 0) * (listing.price_per_quintal || 0),
     0
   );
+  const effectiveRole = (user?.user_metadata?.role as "farmer" | "buyer" | undefined) ?? profile?.role;
+
+  useEffect(() => {
+    if (loading || effectiveRole !== "farmer") return;
+
+    const shouldReload = sessionStorage.getItem("biolink:reload-dashboard-once") === "1";
+    if (!shouldReload) return;
+
+    sessionStorage.removeItem("biolink:reload-dashboard-once");
+    window.location.reload();
+  }, [loading, effectiveRole]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -195,7 +207,7 @@ const FarmerDashboard = () => {
     );
   }
 
-  if (profile?.role !== "farmer") {
+  if (effectiveRole !== "farmer") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Card className="p-8 text-center space-y-4">
@@ -258,19 +270,6 @@ const FarmerDashboard = () => {
             </div>
           </Card>
         </div>
-
-        <Card className="p-6 mb-8 bg-gradient-to-r from-primary to-primary-light text-primary-foreground border border-primary/30 shadow-md">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-bold mb-2">Current Market Price</h3>
-              <p className="text-3xl font-bold text-secondary">
-                ₹{listings[0]?.price_per_quintal ?? 2000}
-              </p>
-              <p className="text-sm opacity-90 mt-1">per quintal (Paddy stubble)</p>
-            </div>
-            <TrendingUp className="w-16 h-16 opacity-30" />
-          </div>
-        </Card>
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">

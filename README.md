@@ -15,7 +15,7 @@ Biolink भारत is a modern stubble trading platform that connects farmers 
 git clone <repo-url>
 cd Biolink-Punjab
 npm install
-cp .env.example .env.local
+touch .env.local
 npm run dev
 ```
 
@@ -23,14 +23,14 @@ By default the dev server runs on `http://localhost:5173`. Update environment va
 
 ### Supabase configuration
 
-The app is wired to a live Supabase instance. Environment variables are provided in `.env.example`; copy them into `.env.local` (ignored by git) to enable API access.
+The app is wired to a live Supabase instance. Set the environment variables in `.env.local` (ignored by git) to enable API access.
 
 | Variable | Value |
 | -------- | ----- |
 | `VITE_SUPABASE_URL` | `https://ymiuiohsnywsgjvlhnrg.supabase.co` |
 | `VITE_SUPABASE_ANON_KEY` | `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InltaXVpb2hzbnl3c2dqdmxobnJnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjM1Mjg1MDEsImV4cCI6MjA3OTEwNDUwMX0.BzGysZm8xbUBUct56JThWZwiMlu8JU0Zz_EmAxCJcr8` |
 
-Database schema and policies can be created by running the SQL in [`supabase.sql`](./supabase.sql) inside the Supabase SQL editor or CLI.
+Database schema and policies can be created by running the SQL files in [`src/migrations`](./src/migrations) inside the Supabase SQL editor or CLI, in the listed order.
 
 ## Available scripts
 

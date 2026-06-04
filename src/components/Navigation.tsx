@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, Leaf, LogOut, LayoutDashboard } from "lucide-react";
+import { Menu, X, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -58,16 +58,22 @@ const Navigation = () => {
             to="/"
             className="flex min-w-0 flex-shrink items-center gap-2 pr-3 group"
           >
-            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full gradient-green flex items-center justify-center transition-smooth group-hover:scale-105">
-              <Leaf className="w-5 h-5 md:w-6 md:h-6 text-primary-foreground" />
+            <div className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-primary-foreground/10 flex items-center justify-center overflow-hidden transition-smooth group-hover:scale-105">
+              <img
+                src="/logo.jpg"
+                alt="Biolink logo"
+                className="w-full h-full object-cover"
+                decoding="async"
+                loading="eager"
+              />
             </div>
             <div className="min-w-0">
               <h1 className="text-base sm:text-lg md:text-xl font-semibold text-primary leading-snug truncate">
                 <span className="inline-flex items-center gap-2 min-w-0">
                   <span className="truncate">Biolink भारत</span>
                   <img
-                    src="/images/bharat-logo.jpg"
-                    alt="Bharat logo"
+                    src="/logo.jpg"
+                    alt="Biolink logo"
                     className="w-[1.95rem] h-[1.95rem] sm:w-[2.275rem] sm:h-[2.275rem] object-contain flex-shrink-0 rounded-sm"
                     decoding="async"
                   />

@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { Leaf, Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
+import { Mail, Phone, MapPin, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 const Footer = () => {
   return (
@@ -15,15 +14,21 @@ const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center">
-                <Leaf className="w-7 h-7" />
+              <div className="w-12 h-12 rounded-full bg-primary-foreground/20 flex items-center justify-center overflow-hidden">
+                <img
+                  src="/logo.jpg"
+                  alt="Biolink logo"
+                  className="w-full h-full object-cover"
+                  decoding="async"
+                  loading="eager"
+                />
               </div>
               <div>
                 <h3 className="text-2xl font-bold inline-flex items-center gap-2">
                   <span>Biolink भारत</span>
                   <img
-                    src="/images/bharat-logo.jpg"
-                    alt="Bharat logo"
+                    src="/logo.jpg"
+                    alt="Biolink logo"
                     className="w-[2.6rem] h-[2.6rem] object-contain flex-shrink-0 rounded-sm"
                     decoding="async"
                     loading="lazy"
@@ -71,14 +76,9 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Contact + Newsletter */}
+          {/* Contact */}
           <div className="space-y-5">
-            <h4 className="text-lg font-semibold">Stay Updated</h4>
-            <p className="text-sm opacity-90">Get market updates, policy news, and platform announcements in your inbox.</p>
-            <div className="flex gap-2">
-              <Input placeholder="Email address" className="bg-primary-foreground/10 text-primary-foreground placeholder:text-primary-foreground/70 border-none" />
-              <Button variant="secondary">Join</Button>
-            </div>
+            <h4 className="text-lg font-semibold">Contact</h4>
             <div className="space-y-3 text-sm">
               <div className="flex items-start gap-3">
                 <Mail className="w-4 h-4 mt-1" />

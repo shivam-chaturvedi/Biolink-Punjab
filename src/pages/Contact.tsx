@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Mail, Phone, MapPin, Send } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabaseClient";
 
 const Contact = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,8 +19,24 @@ const Contact = () => {
     message: ""
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    setIsSubmitting(true);
+    const { error } = await supabase.from("contact_submissions").insert({
+      name: formData.name,
+      email: formData.email,
+      phone: formData.phone,
+      user_type: formData.userType,
+      message: formData.message,
+    });
+
+    if (error) {
+      toast.error(error.message);
+      setIsSubmitting(false);
+      return;
+    }
+
     toast.success("Thank you! We'll get back to you soon.");
     setFormData({
       name: "",
@@ -27,6 +45,7 @@ const Contact = () => {
       userType: "farmer",
       message: ""
     });
+    setIsSubmitting(false);
   };
 
   return (
@@ -61,7 +80,9 @@ const Contact = () => {
                 <Label htmlFor="email">Email Address *</Label>
                 <Input
                   id="email"
-                  type="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="your.email@example.com"
@@ -124,9 +145,9 @@ const Contact = () => {
                 />
               </div>
 
-              <Button type="submit" className="w-full gradient-green text-primary-foreground">
+              <Button type="submit" className="w-full gradient-green text-primary-foreground" disabled={isSubmitting}>
                 <Send className="mr-2 w-4 h-4" />
-                Send Message
+                {isSubmitting ? "Sending..." : "Send Message"}
               </Button>
             </form>
           </Card>

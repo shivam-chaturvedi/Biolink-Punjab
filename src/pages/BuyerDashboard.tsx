@@ -161,6 +161,16 @@ const BuyerDashboard = () => {
   const totalDistricts = new Set(filteredListings.map((listing) => listing.district)).size;
   const activeFarmers = new Set(filteredListings.map((listing) => listing.owner_id)).size;
 
+  useEffect(() => {
+    if (loading || profile?.role !== "buyer") return;
+
+    const shouldReload = sessionStorage.getItem("biolink:reload-dashboard-once") === "1";
+    if (!shouldReload) return;
+
+    sessionStorage.removeItem("biolink:reload-dashboard-once");
+    window.location.reload();
+  }, [loading, profile?.role]);
+
   const openInterestDialog = (listing: Listing) => {
     setInterestListing(listing);
     setInterestListingId(listing.id);

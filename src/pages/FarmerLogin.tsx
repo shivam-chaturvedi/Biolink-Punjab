@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUNJAB_DISTRICTS } from "@/constants/punjabDistricts";
+import { isInvalidEmailError, toFallbackAuthEmail, toSupabaseEmail } from "@/lib/authIdentity";
 
 const heroBackground = "/images/hero-background.jpg";
 
@@ -35,12 +36,21 @@ const FarmerLogin = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const rawEmail = toSupabaseEmail(formData.email);
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      const signInAttempt = async (email: string) =>
+        supabase.auth.signInWithPassword({
+          email,
+          password: formData.password,
+        });
+
+      let { error } = await signInAttempt(rawEmail);
+
+      if (error && isInvalidEmailError(error.message)) {
+        const fallbackEmail = toFallbackAuthEmail(formData.email);
+        ({ error } = await signInAttempt(fallbackEmail));
+      }
 
       if (error) {
         toast.error(error.message);
@@ -58,18 +68,26 @@ const FarmerLogin = () => {
     const finalDistrict =
       formData.district === "Other" ? formData.customDistrict : formData.district;
 
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          role: "farmer",
-          phone: formData.phone,
-          full_name: formData.name,
-          district: finalDistrict,
+    const signUpAttempt = async (email: string) =>
+      supabase.auth.signUp({
+        email,
+        password: formData.password,
+        options: {
+          data: {
+            role: "farmer",
+            phone: formData.phone,
+            full_name: formData.name,
+            district: finalDistrict,
+          },
         },
-      },
-    });
+      });
+
+    let { data, error } = await signUpAttempt(rawEmail);
+
+    if (error && isInvalidEmailError(error.message)) {
+      const fallbackEmail = toFallbackAuthEmail(formData.email);
+      ({ data, error } = await signUpAttempt(fallbackEmail));
+    }
 
     if (error) {
       toast.error(error.message);
@@ -100,7 +118,8 @@ const FarmerLogin = () => {
     }
 
     toast.success("Registration successful!");
-    navigate("/");
+    sessionStorage.setItem("biolink:reload-dashboard-once", "1");
+    navigate("/farmer-dashboard");
     setIsSubmitting(false);
   };
 
@@ -137,7 +156,6 @@ const FarmerLogin = () => {
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter your name"
-                required
                 className="mt-2"
               />
             </div>
@@ -152,17 +170,18 @@ const FarmerLogin = () => {
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+91 XXXXX XXXXX"
-                required
                 className="mt-2 h-11"
               />
             </div>
           )}
 
           <div>
-            <Label htmlFor="email" className="font-semibold">Email Address</Label>
+            <Label htmlFor="email" className="font-semibold">Email Address *</Label>
             <Input
               id="email"
-              type="email"
+              type="text"
+              inputMode="email"
+              autoComplete="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="your.email@example.com"
@@ -184,7 +203,6 @@ const FarmerLogin = () => {
                     customDistrict: e.target.value === "Other" ? formData.customDistrict : "",
                   })
                 }
-                required
                 className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               >
                 <option value="" disabled>
@@ -202,14 +220,13 @@ const FarmerLogin = () => {
                   placeholder="Enter district"
                   value={formData.customDistrict}
                   onChange={(e) => setFormData({ ...formData, customDistrict: e.target.value })}
-                  required
                 />
               )}
             </div>
           )}
 
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Password *</Label>
             <Input
               id="password"
               type="password"

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUNJAB_DISTRICTS } from "@/constants/punjabDistricts";
+import { isInvalidEmailError, toFallbackAuthEmail, toSupabaseEmail } from "@/lib/authIdentity";
 
 const mustardField = "/images/mustard-field.jpg";
 
@@ -37,12 +38,21 @@ const BuyerLogin = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    const rawEmail = toSupabaseEmail(formData.email);
 
     if (isLogin) {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
-        password: formData.password,
-      });
+      const signInAttempt = async (email: string) =>
+        supabase.auth.signInWithPassword({
+          email,
+          password: formData.password,
+        });
+
+      let { error } = await signInAttempt(rawEmail);
+
+      if (error && isInvalidEmailError(error.message)) {
+        const fallbackEmail = toFallbackAuthEmail(formData.email);
+        ({ error } = await signInAttempt(fallbackEmail));
+      }
 
       if (error) {
         toast.error(error.message);
@@ -60,20 +70,28 @@ const BuyerLogin = () => {
     const finalDistrict =
       formData.district === "Other" ? formData.customDistrict : formData.district;
 
-    const { data, error } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-      options: {
-        data: {
-          role: "buyer",
-          company_name: formData.companyName,
-          gst_number: formData.gstNumber,
-          contact_person: formData.contactPerson,
-          phone: formData.phone,
-          district: finalDistrict,
+    const signUpAttempt = async (email: string) =>
+      supabase.auth.signUp({
+        email,
+        password: formData.password,
+        options: {
+          data: {
+            role: "buyer",
+            company_name: formData.companyName,
+            gst_number: formData.gstNumber,
+            contact_person: formData.contactPerson,
+            phone: formData.phone,
+            district: finalDistrict,
+          },
         },
-      },
-    });
+      });
+
+    let { data, error } = await signUpAttempt(rawEmail);
+
+    if (error && isInvalidEmailError(error.message)) {
+      const fallbackEmail = toFallbackAuthEmail(formData.email);
+      ({ data, error } = await signUpAttempt(fallbackEmail));
+    }
 
     if (error) {
       toast.error(error.message);
@@ -106,7 +124,8 @@ const BuyerLogin = () => {
     }
 
     toast.success("Registration successful!");
-    navigate("/");
+    sessionStorage.setItem("biolink:reload-dashboard-once", "1");
+    navigate("/buyer-dashboard");
     setIsSubmitting(false);
   };
 
@@ -149,7 +168,6 @@ const BuyerLogin = () => {
                     customDistrict: e.target.value === "Other" ? formData.customDistrict : "",
                   })
                 }
-                  required
                   className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
                 >
                   <option value="" disabled>
@@ -167,7 +185,6 @@ const BuyerLogin = () => {
                     placeholder="Enter district"
                     value={formData.customDistrict}
                     onChange={(e) => setFormData({ ...formData, customDistrict: e.target.value })}
-                    required
                   />
                 )}
               </div>
@@ -179,7 +196,6 @@ const BuyerLogin = () => {
                   value={formData.companyName}
                   onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
                   placeholder="Your company name"
-                  required
                   className="mt-2"
                 />
               </div>
@@ -191,7 +207,6 @@ const BuyerLogin = () => {
                   value={formData.gstNumber}
                   onChange={(e) => setFormData({ ...formData, gstNumber: e.target.value })}
                   placeholder="GST number"
-                  required
                   className="mt-2"
                 />
               </div>
@@ -203,7 +218,6 @@ const BuyerLogin = () => {
                   value={formData.contactPerson}
                   onChange={(e) => setFormData({ ...formData, contactPerson: e.target.value })}
                   placeholder="Primary contact name"
-                  required
                   className="mt-2"
                 />
               </div>
@@ -216,7 +230,6 @@ const BuyerLogin = () => {
                   value={formData.phone}
                   onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                   placeholder="+91 XXXXX XXXXX"
-                  required
                   className="mt-2"
                 />
               </div>
@@ -224,10 +237,12 @@ const BuyerLogin = () => {
           )}
 
           <div>
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email">Email Address *</Label>
             <Input
               id="email"
-              type="email"
+              type="text"
+              inputMode="email"
+              autoComplete="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="company@example.com"
@@ -237,7 +252,7 @@ const BuyerLogin = () => {
           </div>
 
           <div>
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Password *</Label>
             <Input
               id="password"
               type="password"
