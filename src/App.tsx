@@ -21,6 +21,7 @@ import FarmerListingDetails from "./pages/FarmerListingDetails";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
+import AnalyticsTracker from "./components/AnalyticsTracker";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ const App = () => (
       <AuthProvider>
         <BrowserRouter future={{ v7_relativeSplatPath: true }}>
           <ScrollToTop />
+          <AnalyticsTracker />
           <div className="flex flex-col min-h-screen">
             <Navigation />
             <main className="flex-grow">

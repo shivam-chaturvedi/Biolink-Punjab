@@ -1,22 +1,27 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Leaf, Phone } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Leaf, Mail, Phone, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { PUNJAB_DISTRICTS } from "@/constants/punjabDistricts";
 import { isInvalidEmailError, toFallbackAuthEmail, toSupabaseEmail } from "@/lib/authIdentity";
+import { PhoneOtpFields, usePhoneOtpFlow } from "@/components/auth/PhoneOtpAuth";
 
 const heroBackground = "/images/hero-background.jpg";
+
+type AuthMethod = "email" | "phone";
 
 const FarmerLogin = () => {
   const navigate = useNavigate();
   const { user, profile, refreshProfile } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
+  const [authMethod, setAuthMethod] = useState<AuthMethod>("phone");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     phone: "",
@@ -24,7 +29,7 @@ const FarmerLogin = () => {
     name: "",
     district: "",
     customDistrict: "",
-    password: ""
+    password: "",
   });
 
   useEffect(() => {
@@ -33,7 +38,30 @@ const FarmerLogin = () => {
     }
   }, [user, profile, navigate]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const getProfileMetadata = useCallback(() => {
+    const finalDistrict =
+      formData.district === "Other" ? formData.customDistrict : formData.district;
+
+    if (!formData.name.trim() || !finalDistrict?.trim()) {
+      return undefined;
+    }
+
+    return {
+      role: "farmer",
+      full_name: formData.name.trim(),
+      district: finalDistrict.trim(),
+    };
+  }, [formData.name, formData.district, formData.customDistrict]);
+
+  const phoneOtp = usePhoneOtpFlow({
+    role: "farmer",
+    isLogin,
+    getProfileMetadata,
+    refreshProfile,
+    onSuccess: () => navigate("/farmer-dashboard"),
+  });
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     const rawEmail = toSupabaseEmail(formData.email);
@@ -123,17 +151,73 @@ const FarmerLogin = () => {
     setIsSubmitting(false);
   };
 
+  const toggleLoginMode = () => {
+    setIsLogin((prev) => !prev);
+    phoneOtp.resetOtpFlow();
+  };
+
+  const registrationFields = !isLogin && (
+    <>
+      <div>
+        <Label htmlFor="name">Full Name *</Label>
+        <Input
+          id="name"
+          value={formData.name}
+          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          placeholder="Enter your name"
+          required={authMethod === "phone"}
+          className="mt-2"
+        />
+      </div>
+
+      <div>
+        <Label htmlFor="district">District *</Label>
+        <select
+          id="district"
+          value={formData.district}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              district: e.target.value,
+              customDistrict: e.target.value === "Other" ? formData.customDistrict : "",
+            })
+          }
+          required={authMethod === "phone"}
+          className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+        >
+          <option value="" disabled>
+            Select district
+          </option>
+          {PUNJAB_DISTRICTS.map((district) => (
+            <option key={district} value={district}>
+              {district}
+            </option>
+          ))}
+        </select>
+        {formData.district === "Other" && (
+          <Input
+            className="mt-3"
+            placeholder="Enter district"
+            value={formData.customDistrict}
+            onChange={(e) => setFormData({ ...formData, customDistrict: e.target.value })}
+            required={authMethod === "phone"}
+          />
+        )}
+      </div>
+    </>
+  );
+
   return (
-    <div 
+    <div
       className="min-h-screen flex items-center justify-center py-16 px-4"
       style={{
         backgroundImage: `url(${heroBackground})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
+        backgroundSize: "cover",
+        backgroundPosition: "center",
       }}
     >
       <div className="absolute inset-0 bg-background/80 backdrop-blur-sm" />
-      
+
       <Card className="relative z-10 w-full max-w-md p-8 shadow-large">
         <div className="text-center mb-8">
           <div className="w-16 h-16 rounded-full gradient-green flex items-center justify-center mx-auto mb-4">
@@ -147,107 +231,105 @@ const FarmerLogin = () => {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <div>
-              <Label htmlFor="name">Full Name</Label>
-              <Input
-                id="name"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Enter your name"
-                className="mt-2"
-              />
-            </div>
-          )}
+        <Tabs
+          value={authMethod}
+          onValueChange={(value) => {
+            setAuthMethod(value as AuthMethod);
+            phoneOtp.resetOtpFlow();
+          }}
+          className="mb-4"
+        >
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="phone" className="gap-2">
+              <Smartphone className="h-4 w-4" />
+              Phone OTP
+            </TabsTrigger>
+            <TabsTrigger value="email" className="gap-2">
+              <Mail className="h-4 w-4" />
+              Email
+            </TabsTrigger>
+          </TabsList>
 
-          {!isLogin && (
-            <div>
-              <Label htmlFor="phone" className="font-semibold">Phone Number</Label>
-              <Input
-                id="phone"
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+91 XXXXX XXXXX"
-                className="mt-2 h-11"
-              />
-            </div>
-          )}
-
-          <div>
-            <Label htmlFor="email" className="font-semibold">Email Address *</Label>
-            <Input
-              id="email"
-              type="text"
-              inputMode="email"
-              autoComplete="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="your.email@example.com"
-              required
-              className="mt-2 h-11"
+          <TabsContent value="phone" className="mt-4">
+            {registrationFields}
+            <PhoneOtpFields
+              otpStep={phoneOtp.otpStep}
+              phone={phoneOtp.phone}
+              onPhoneChange={phoneOtp.setPhone}
+              otp={phoneOtp.otp}
+              onOtpChange={phoneOtp.setOtp}
+              resendCooldown={phoneOtp.resendCooldown}
+              onResend={phoneOtp.sendOtp}
+              onBack={() => phoneOtp.setOtpStep("phone")}
+              isSubmitting={phoneOtp.isSubmitting}
+              isLogin={isLogin}
+              submitLabel={isLogin ? "Login" : "Register"}
+              submitClassName="w-full gradient-green text-primary-foreground"
+              onSubmit={phoneOtp.handleSubmit}
             />
-          </div>
+          </TabsContent>
 
-          {!isLogin && (
-            <div>
-              <Label htmlFor="district">District</Label>
-              <select
-                id="district"
-                value={formData.district}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    district: e.target.value,
-                    customDistrict: e.target.value === "Other" ? formData.customDistrict : "",
-                  })
-                }
-                className="mt-2 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-              >
-                <option value="" disabled>
-                  Select district
-                </option>
-                {PUNJAB_DISTRICTS.map((district) => (
-                  <option key={district} value={district}>
-                    {district}
-                  </option>
-                ))}
-              </select>
-              {formData.district === "Other" && (
-                <Input
-                  className="mt-3"
-                  placeholder="Enter district"
-                  value={formData.customDistrict}
-                  onChange={(e) => setFormData({ ...formData, customDistrict: e.target.value })}
-                />
+          <TabsContent value="email" className="mt-4">
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
+              {registrationFields}
+
+              {!isLogin && (
+                <div>
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    placeholder="+91 XXXXX XXXXX"
+                    className="mt-2 h-11"
+                  />
+                </div>
               )}
-            </div>
-          )}
 
-          <div>
-            <Label htmlFor="password">Password *</Label>
-            <Input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              placeholder="Enter password"
-              required
-              className="mt-2"
-            />
-          </div>
+              <div>
+                <Label htmlFor="email" className="font-semibold">
+                  Email Address *
+                </Label>
+                <Input
+                  id="email"
+                  type="text"
+                  inputMode="email"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="your.email@example.com"
+                  required
+                  className="mt-2 h-11"
+                />
+              </div>
 
-          <Button type="submit" className="w-full gradient-green text-primary-foreground" disabled={isSubmitting}>
-            {isSubmitting ? "Processing..." : isLogin ? "Login" : "Register"}
-          </Button>
-        </form>
+              <div>
+                <Label htmlFor="password">Password *</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  placeholder="Enter password"
+                  required
+                  className="mt-2"
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full gradient-green text-primary-foreground"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? "Processing..." : isLogin ? "Login" : "Register"}
+              </Button>
+            </form>
+          </TabsContent>
+        </Tabs>
 
         <div className="mt-6 text-center">
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            className="text-primary hover:underline"
-          >
+          <button onClick={toggleLoginMode} className="text-primary hover:underline">
             {isLogin ? "Don't have an account? Register" : "Already have an account? Login"}
           </button>
         </div>
@@ -262,7 +344,7 @@ const FarmerLogin = () => {
         <div className="mt-6 p-4 bg-muted rounded-lg">
           <h3 className="font-semibold text-sm mb-2 text-primary">Simple Registration Process:</h3>
           <ul className="text-sm text-muted-foreground space-y-1">
-            <li>✓ Register with your phone number</li>
+            <li>✓ Login with phone OTP or email</li>
             <li>✓ Large buttons for easy navigation</li>
             <li>✓ Mobile-first design</li>
             <li>✓ Support available via phone</li>

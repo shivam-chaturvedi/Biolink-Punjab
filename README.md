@@ -32,6 +32,22 @@ The app is wired to a live Supabase instance. Set the environment variables in `
 
 Database schema and policies can be created by running the SQL files in [`src/migrations`](./src/migrations) inside the Supabase SQL editor or CLI, in the listed order.
 
+### Phone OTP authentication
+
+The app supports two login methods on the farmer and buyer pages:
+
+1. **Phone OTP** (default) — SMS one-time password via Supabase Auth
+2. **Email** — email and password
+
+Phone OTP uses Supabase’s built-in SMS provider (Twilio). Configure it in the Supabase Dashboard:
+
+1. **Authentication → Providers → Phone** — enable the phone provider
+2. **Authentication → Providers → Phone → SMS provider** — add your Twilio Account SID, Auth Token, and Message Service SID (or From number)
+3. Set OTP length (6 digits recommended) and enable auto-confirm for phone signups
+4. Run migration [`0007_profiles_phone_auth.sql`](./src/migrations/0007_profiles_phone_auth.sql) in the SQL editor
+
+No extra frontend env vars are required for SMS; Twilio credentials stay in Supabase only. The existing `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are sufficient.
+
 ## Available scripts
 
 | Command        | Description                           |
